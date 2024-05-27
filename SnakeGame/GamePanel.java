@@ -18,6 +18,7 @@ public class GamePanel extends JPanel implements ActionListener{
 	int appleY;
 	char direction = 'R';
 	boolean running = false;
+	boolean gameOver = false; // New state for game over
 	Timer timer;
 	Random random;
 	
@@ -30,24 +31,26 @@ public class GamePanel extends JPanel implements ActionListener{
 		startGame();
 	}
 	public void startGame() {
-		newApple();
-		running = true;
-		timer = new Timer(DELAY,this);
-		timer.start();
+		bodyParts = 6; // Reset body parts
+        applesEaten = 0; // Reset score
+        direction = 'R'; // Reset direction
+		for (int i = 0; i < bodyParts; i++) {
+            x[i] = 0;
+            y[i] = 0;
+        }
+        running = true;
+        gameOver = false; // Reset game over state
+        newApple();
+        timer = new Timer(DELAY, this);
+        timer.start();
+		System.out.println("Game started");
 	}
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		draw(g);
 	}
 	public void draw(Graphics g) {
-		
 		if(running) {
-			/*
-			for(int i=0;i<SCREEN_HEIGHT/UNIT_SIZE;i++) {
-				g.drawLine(i*UNIT_SIZE, 0, i*UNIT_SIZE, SCREEN_HEIGHT);
-				g.drawLine(0, i*UNIT_SIZE, SCREEN_WIDTH, i*UNIT_SIZE);
-			}
-			*/
 			g.setColor(Color.red);
 			g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
 		
@@ -110,29 +113,39 @@ public class GamePanel extends JPanel implements ActionListener{
 		for(int i = bodyParts;i>0;i--) {
 			if((x[0] == x[i])&& (y[0] == y[i])) {
 				running = false;
+				gameOver = true;
+                System.out.println("Collision with body. Game over.");
 			}
 		}
-		//check if head touches left border
-		if(x[0] < 0) {
-			running = false;
-		}
-		//check if head touches right border
-		if(x[0] > SCREEN_WIDTH) {
-			running = false;
-		}
-		//check if head touches top border
-		if(y[0] < 0) {
-			running = false;
-		}
-		//check if head touches bottom border
-		if(y[0] > SCREEN_HEIGHT) {
-			running = false;
-		}
-		
-		if(!running) {
-			timer.stop();
-		}
-	}
+		if (x[0] < 0) {
+            running = false;
+            gameOver = true;
+            System.out.println("Collision with left wall. Game over.");
+        }
+
+        if (x[0] >= SCREEN_WIDTH) {
+            running = false;
+            gameOver = true;
+            System.out.println("Collision with right wall. Game over.");
+        }
+
+        if (y[0] < 0) {
+            running = false;
+            gameOver = true;
+            System.out.println("Collision with top wall. Game over.");
+        }
+
+        if (y[0] >= SCREEN_HEIGHT) {
+            running = false;
+            gameOver = true;
+            System.out.println("Collision with bottom wall. Game over.");
+        }
+
+        if (!running) {
+            timer.stop();
+        }
+    }
+
 	public void gameOver(Graphics g) {
 		//Score
 		g.setColor(Color.red);
@@ -144,7 +157,11 @@ public class GamePanel extends JPanel implements ActionListener{
 		g.setFont( new Font("Ink Free",Font.BOLD, 75));
 		FontMetrics metrics2 = getFontMetrics(g.getFont());
 		g.drawString("Game Over", (SCREEN_WIDTH - metrics2.stringWidth("Game Over"))/2, SCREEN_HEIGHT/2);
-	}
+		//Restart
+		g.setFont(new Font("Ink Free", Font.BOLD, 40));
+        FontMetrics metrics3 = getFontMetrics(g.getFont());
+        g.drawString("Press any key to restart", (SCREEN_WIDTH - metrics3.stringWidth("Press any key to restart")) / 2, SCREEN_HEIGHT / 2 + 50);
+    }
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		
@@ -159,6 +176,8 @@ public class GamePanel extends JPanel implements ActionListener{
 	public class MyKeyAdapter extends KeyAdapter{
 		@Override
 		public void keyPressed(KeyEvent e) {
+			if (running) {
+				System.out.println(running);
 			switch(e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
 				if(direction != 'R') {
@@ -181,6 +200,10 @@ public class GamePanel extends JPanel implements ActionListener{
 				}
 				break;
 			}
+		} else if (gameOver) {
+			startGame();
+			repaint();
+		}
 		}
 	}
 }
